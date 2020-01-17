@@ -3,7 +3,7 @@ use rand::thread_rng;
 use rand::seq::SliceRandom;
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
-enum Suit {
+pub enum Suit {
     Club,
     Spade,
     Heart,
@@ -24,7 +24,7 @@ impl Suit {
 }
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
-enum Rank {
+pub enum Rank {
     Ace,
     Two,
     Three,
@@ -78,8 +78,8 @@ impl Rank {
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
 pub struct Card {
-    suit: Suit,
-    rank: Rank
+    pub suit: Suit,
+    pub rank: Rank
 }
 
 impl fmt::Display for Card {
@@ -109,8 +109,8 @@ impl Hand {
         self.cards.remove(i)
     }
 
-    pub fn contains(&self, c: Card) -> bool {
-        self.cards.contains(&c)
+    pub fn contains(&self, c: &Card) -> bool {
+        self.cards.contains(c)
     }
 
     pub fn size(&self) -> usize {
@@ -119,6 +119,10 @@ impl Hand {
 
     pub fn ittr(&self) -> std::slice::Iter<'_, Card> {
         self.cards.iter()
+    }
+
+    pub fn get_cards(&self) -> &Vec<Card> {
+        &self.cards
     }
 }
 
