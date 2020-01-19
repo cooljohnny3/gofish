@@ -109,10 +109,6 @@ impl Hand {
         self.cards.remove(i)
     }
 
-    pub fn contains(&self, c: &Card) -> bool {
-        self.cards.contains(c)
-    }
-
     pub fn size(&self) -> usize {
         self.cards.len()
     }

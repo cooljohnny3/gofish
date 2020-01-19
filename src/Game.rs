@@ -76,9 +76,8 @@ impl Game {
             if trimmed_input == "Y" || trimmed_input == "y" {
                 self.status_menu();
                 // check pairs
+                let pairs = self.check_pairs(self.player.get_cards());
                 // play pairs
-                self.check_pairs(self.player.get_cards());
-
                 // show status ahgain if pairs were found
                 // give selection of card to call
                 // check opponent if selected card is present in hand
@@ -93,20 +92,28 @@ impl Game {
     }
 
     // Checks for pairs in hand
-    // returns the cards to remove
-    fn check_pairs(&self, h: &deck::Hand) -> Vec<deck::Card> {
+    // returns new Hand
+    fn check_pairs(&self, h: &deck::Hand) -> deck::Hand {
         let hand = h.get_cards();
         let mut cards = vec![];
         for i in 0..hand.len() {
             for j in i..hand.len() {
                 if i != j && hand[i].rank == hand[j].rank && 
                 !cards.contains(&hand[i]) && !cards.contains(&hand[j]) {
-                    cards.push(hand[i]);
-                    cards.push(hand[j]);
+                    cards.remove(i);
+                    cards.remove(j);
                 }
             }
         };
-        cards
+        deck::Hand::new_with_cards(cards)
+    }
+
+    fn remove_pairs(&self, h: &deck::Hand, pairs : Vec<deck::Card>) {
+        for card in h.get_cards() {
+            if pairs.contains(card) {
+                h.remove(card);
+            }
+        }
     }
 }
 
