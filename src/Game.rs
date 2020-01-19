@@ -99,7 +99,8 @@ impl Game {
         let mut cards = vec![];
         for i in 0..hand.len() {
             for j in i..hand.len() {
-                if hand[i].rank == hand[j].rank && !cards.contains(&hand[i]) && !cards.contains(&hand[j]) {
+                if i != j && hand[i].rank == hand[j].rank && 
+                !cards.contains(&hand[i]) && !cards.contains(&hand[j]) {
                     cards.push(hand[i]);
                     cards.push(hand[j]);
                 }
@@ -119,19 +120,19 @@ fn test_dealing() {
 }
 
 #[test]
-fn test_check_pairs() {
+fn test_check_pairs1() {
     let g = Game::new();
     let hand = deck::Hand::new_with_cards(vec![
         deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Diamond },
         deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Club },
         deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Diamond },
-        deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Heart },
+        deck::Card { rank: deck::Rank::Two, suit: deck::Suit::Heart },
         deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
     ]);
     assert_eq!(g.check_pairs(&hand), vec![
         deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Diamond },
         deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Club },
-        deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Heart },
+        deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Diamond },
         deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
     ]);
 }
