@@ -3,7 +3,7 @@ use std::io;
 mod deck;
 
 struct Player {
-    pairs: i32,
+    pairs: usize,
     hand: deck::Hand
 }
 
@@ -14,6 +14,14 @@ impl Player {
 
     pub fn get_cards(&self) -> &deck::Hand {
         &self.hand
+    }
+
+    pub fn set_cards(&mut self, new_hand: deck::Hand) {
+        self.hand = new_hand;
+    }
+
+    pub fn add_pairs(&mut self, pairs: usize) {
+        self.pairs += pairs;
     }
 }
 
@@ -77,9 +85,17 @@ impl Game {
                 self.status_menu();
                 // check pairs
                 let pairs = self.check_pairs(self.player.get_cards());
-                // play pairs
-                // show status ahgain if pairs were found
+                // check if pairs were found
+                if pairs.get_cards().len() != self.player.get_cards().get_cards().len() {
+                    // add points
+                    self.player.add_pairs((self.player.get_cards().get_cards().len() - pairs.get_cards().len()) / 2);
+                    // set the new hand
+                    self.player.set_cards(pairs);
+                    // show status again with new points and hand
+                    self.status_menu();
+                }
                 // give selection of card to call
+                let card = self.pick_card();
                 // check opponent if selected card is present in hand
                 // get card or go fish (draw)
                 end = true;
@@ -92,7 +108,7 @@ impl Game {
     }
 
     // Checks for pairs in hand
-    // returns new Hand
+    // returns new Hand without pairs
     fn check_pairs(&self, h: &deck::Hand) -> deck::Hand {
         let hand = h.get_cards();
         let mut cards = vec![];
@@ -100,20 +116,33 @@ impl Game {
             for j in i..hand.len() {
                 if i != j && hand[i].rank == hand[j].rank && 
                 !cards.contains(&hand[i]) && !cards.contains(&hand[j]) {
-                    cards.remove(i);
-                    cards.remove(j);
+                    println!("Pair of {}s found", hand[i].rank.to_char());
+                    cards.push(hand[i]);
+                    cards.push(hand[j]);
                 }
             }
         };
         deck::Hand::new_with_cards(cards)
     }
 
-    fn remove_pairs(&self, h: &deck::Hand, pairs : Vec<deck::Card>) {
-        for card in h.get_cards() {
-            if pairs.contains(card) {
-                h.remove(card);
-            }
+    // pick a card from the player's hand
+    fn pick_card(&self) -> deck::Card {
+        println!("Which card do you want to call?");
+        let cards = self.player.get_cards().get_cards();
+        for i in 0..cards.len() {
+            println!("{}. {}", i, cards[i]);
         }
+        let mut input;
+        loop {
+            let mut raw_input = String::new();
+            io::stdin().read_line(&mut raw_input).expect("Invalid input");
+            let trimmed_input = raw_input.trim();
+            input = trimmed_input.parse::<usize>().expect("Please enter a positive number");
+            if input < cards.len() {
+                break
+            }
+        } 
+        cards[input]
     }
 }
 
@@ -136,10 +165,23 @@ fn test_check_pairs1() {
         deck::Card { rank: deck::Rank::Two, suit: deck::Suit::Heart },
         deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
     ]);
-    assert_eq!(g.check_pairs(&hand), vec![
+    assert_eq!(*g.check_pairs(&hand).get_cards(), vec![
         deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Diamond },
         deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Club },
         deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Diamond },
         deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
     ]);
+}
+
+#[test]
+fn test_pick_card1() {
+    let mut game;
+    for _i in 0..100 {
+        game = Game::new();
+        let hand = deck::Hand::new_with_cards(game.deal());
+        game.player.set_cards(hand);
+        let picked_card = game.pick_card();
+        // card is in player's hand
+        assert_eq!(true, game.player.get_cards().get_cards().contains(&picked_card));
+    }
 }
