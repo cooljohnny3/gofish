@@ -65,7 +65,7 @@ impl Game {
         // Turn number, cards left in deck
         println!("Turn: {} Cards Left {}", self.turn, self.deck.get_cards_left());
         println!("Score: Player: {} Computer: {}", self.player.pairs, self.opponent.pairs);
-        println!("Opponent has {} cards in their hand.", self.opponent.hand.size());
+        println!("Computer has {} cards in their hand.", self.opponent.hand.size());
         print!("Your cards: ");
         for card in self.player.hand.ittr() {
             print!("{}", card);
@@ -83,7 +83,7 @@ impl Game {
             let trimmed_input = input.trim();
             if trimmed_input == "Y" || trimmed_input == "y" {
                 self.status_menu();
-                // check pairs
+                // check pairs for player
                 let pairs = self.check_pairs(self.player.get_cards());
                 // check if pairs were found
                 if pairs.get_cards().len() != self.player.get_cards().get_cards().len() {
@@ -94,10 +94,23 @@ impl Game {
                     // show status again with new points and hand
                     self.status_menu();
                 }
+                // check pairs for opponent
+                let pairs = self.check_pairs(self.opponent.get_cards());
+                // check if pairs were found
+                if pairs.get_cards().len() != self.opponent.get_cards().get_cards().len() {
+                    // add points
+                    self.opponent.add_pairs((self.opponent.get_cards().get_cards().len() - pairs.get_cards().len()) / 2);
+                    // set the new hand
+                    self.opponent.set_cards(pairs);
+                    // show status again with new points and hand
+                    self.status_menu();
+                }
                 // give selection of card to call
                 let card = self.pick_card();
                 // check opponent if selected card is present in hand
+                let option = self.check_selection(&card, &self.opponent);
                 // get card or go fish (draw)
+                // opponent turn
                 end = true;
             } else if trimmed_input == "N" || trimmed_input == "n" {
                 end = true;
@@ -144,44 +157,60 @@ impl Game {
         } 
         cards[input]
     }
+
+    fn check_selection(&self, c: &deck::Card, p: &Player) -> Option<deck::Card> {
+        let mut value = None;
+        let cards = p.get_cards().get_cards();
+        for i in cards {
+            if i.rank == c.rank {
+                value = Some(*i)
+            }
+        }
+        return value
+    }
 }
 
-#[test]
-fn test_dealing() {
-    let mut g = Game::new();
-    let hand = deck::Hand::new_with_cards(g.deal());
-    
-    assert_eq!(g.deck.get_cards_left(), 47);
-    assert_eq!(hand.size(), 5);
-}
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_dealing() {
+        let mut g = Game::new();
+        let hand = deck::Hand::new_with_cards(g.deal());
+        
+        assert_eq!(g.deck.get_cards_left(), 47);
+        assert_eq!(hand.size(), 5);
+    }
 
-#[test]
-fn test_check_pairs1() {
-    let g = Game::new();
-    let hand = deck::Hand::new_with_cards(vec![
-        deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Diamond },
-        deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Club },
-        deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Diamond },
-        deck::Card { rank: deck::Rank::Two, suit: deck::Suit::Heart },
-        deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
-    ]);
-    assert_eq!(*g.check_pairs(&hand).get_cards(), vec![
-        deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Diamond },
-        deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Club },
-        deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Diamond },
-        deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
-    ]);
-}
+    #[test]
+    fn test_check_pairs1() {
+        let g = Game::new();
+        let hand = deck::Hand::new_with_cards(vec![
+            deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Diamond },
+            deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Club },
+            deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Diamond },
+            deck::Card { rank: deck::Rank::Two, suit: deck::Suit::Heart },
+            deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
+        ]);
+        assert_eq!(*g.check_pairs(&hand).get_cards(), vec![
+            deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Diamond },
+            deck::Card { rank: deck::Rank::Five, suit: deck::Suit::Club },
+            deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Diamond },
+            deck::Card { rank: deck::Rank::Three, suit: deck::Suit::Club },
+        ]);
+    }
 
-#[test]
-fn test_pick_card1() {
-    let mut game;
-    for _i in 0..100 {
-        game = Game::new();
-        let hand = deck::Hand::new_with_cards(game.deal());
-        game.player.set_cards(hand);
-        let picked_card = game.pick_card();
-        // card is in player's hand
-        assert_eq!(true, game.player.get_cards().get_cards().contains(&picked_card));
+    #[test]
+    fn test_check_selection() {
+        let mut g = Game::new();
+        let hand1 = deck::Hand::new_with_cards(g.deal());
+        let hand2 = deck::Hand::new_with_cards(g.deal());
+        g.player.set_cards(hand1);
+        g.opponent.set_cards(hand2);
+
+        for card in g.player.hand.get_cards() {
+            let selection = g.check_selection(card, &g.opponent);
+            
+        }
     }
 }
